@@ -91,14 +91,16 @@ def validate_transaction_signature(transaction: SignedTransactionAPI) -> None:
     message = transaction.get_message_for_signing()
     # vrs = (transaction.y_parity, transaction.r, transaction.s)
     signature = transaction.signature
+    wots = winternitz.signatures.WOTS()
     try:
         # signature = keys.Signature(vrs=vrs)
         # public_key = signature.recover_public_key_from_msg(message)
-        public_key = winternitz.signatures.WOTS().getPubkeyFromSignature(message, signature)
+        public_key = wots.getPubkeyFromSignature(message, signature)
     except BadSignature as e:
         raise ValidationError(f"Bad Signature: {str(e)}")
 
-    if not signature.verify_msg(message, public_key):
+    # if not signature.verify_msg(message, public_key):
+    if not wots.verify(message, signature):
         raise ValidationError("Invalid Signature")
 
 
