@@ -2,6 +2,8 @@ from typing import (
     NamedTuple,
 )
 
+import winternitz.signatures
+
 from eth_keys import (
     datatypes,
     keys,
@@ -99,10 +101,13 @@ def validate_transaction_signature(transaction: SignedTransactionAPI) -> None:
 
 
 def extract_transaction_sender(transaction: SignedTransactionAPI) -> Address:
-    vrs = (transaction.y_parity, transaction.r, transaction.s)
-    signature = keys.Signature(vrs=vrs)
+    # vrs = (transaction.y_parity, transaction.r, transaction.s)
+    # signature = keys.Signature(vrs=vrs)
+    signature = transaction.signature
     message = transaction.get_message_for_signing()
-    public_key = signature.recover_public_key_from_msg(message)
+    # public_key = signature.recover_public_key_from_msg(message)
+    public_key_listbytes = winternitz.signatures.WOTS().getPubkeyFromSignature(message, signature)
+    public_key = datatypes.PublicKey(public_key_bytes=b''.join(public_key_listbytes))
     sender = public_key.to_canonical_address()
     return Address(sender)
 
