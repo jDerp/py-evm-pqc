@@ -2,6 +2,8 @@ from typing import (
     NamedTuple,
 )
 
+import winternitz.signatures
+
 from eth_keys import (
     datatypes,
     keys,
@@ -87,10 +89,12 @@ def create_transaction_signature(
 
 def validate_transaction_signature(transaction: SignedTransactionAPI) -> None:
     message = transaction.get_message_for_signing()
-    vrs = (transaction.y_parity, transaction.r, transaction.s)
+    # vrs = (transaction.y_parity, transaction.r, transaction.s)
+    signature = transaction.signature
     try:
-        signature = keys.Signature(vrs=vrs)
-        public_key = signature.recover_public_key_from_msg(message)
+        # signature = keys.Signature(vrs=vrs)
+        # public_key = signature.recover_public_key_from_msg(message)
+        public_key = winternitz.signatures.WOTS().getPubkeyFromSignature(message, signature)
     except BadSignature as e:
         raise ValidationError(f"Bad Signature: {str(e)}")
 

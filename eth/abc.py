@@ -592,9 +592,10 @@ class TransactionBuilderAPI(TransactionDecoderAPI):
         to: Address,
         value: int,
         data: bytes,
-        v: int,
-        r: int,
-        s: int,
+        # v: int,
+        # r: int,
+        # s: int,
+        signature : List[bytes],
     ) -> "SignedTransactionAPI":
         """
         Create a signed transaction.
@@ -618,15 +619,15 @@ class SignedTransactionAPI(BaseTransactionAPI, TransactionFieldsAPI):
         """
         ...
 
-    @property
-    @abstractmethod
-    def y_parity(self) -> int:
-        """
-        The bit used to disambiguate elliptic curve signatures.
+    # @property
+    # @abstractmethod
+    # def y_parity(self) -> int:
+    #     """
+    #     The bit used to disambiguate elliptic curve signatures.
 
-        The only values this method will return are 0 or 1.
-        """
-        ...
+    #     The only values this method will return are 0 or 1.
+    #     """
+    #     ...
 
     type_id: Optional[int]
     """
