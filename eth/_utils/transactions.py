@@ -14,6 +14,7 @@ from eth_keys.exceptions import (
 from eth_utils import (
     ValidationError,
     int_to_big_endian,
+    keccak # added for PrivateKey.sign_msg
 )
 import rlp
 
@@ -34,6 +35,8 @@ from eth.typing import (
     VRS,
     Address,
 )
+
+from typing import Any, Callable, List, Optional
 
 EIP155_CHAIN_ID_OFFSET = 35
 # Add this offset to y_parity to get "v" for legacy transactions, from Frontier
@@ -58,13 +61,41 @@ def extract_signature_v(v: int) -> int:
         return V_OFFSET
 
 
-def create_transaction_signature(
-    unsigned_txn: UnsignedTransactionAPI,
-    private_key: datatypes.PrivateKey,
-    chain_id: int = None,
-) -> VRS:
-    transaction_parts = rlp.decode(rlp.encode(unsigned_txn))
+# def create_transaction_signature(
+#     unsigned_txn: UnsignedTransactionAPI,
+#     private_key: datatypes.PrivateKey,
+#     chain_id: int = None,
+# ) -> VRS:
+#     transaction_parts = rlp.decode(rlp.encode(unsigned_txn))
 
+#     if chain_id:
+#         transaction_parts_for_signature = transaction_parts + [
+#             int_to_big_endian(chain_id),
+#             b"",
+#             b"",
+#         ]
+#     else:
+#         transaction_parts_for_signature = transaction_parts
+
+#     message = rlp.encode(transaction_parts_for_signature)
+#     signature = private_key.sign_msg(message)
+
+#     canonical_v, r, s = signature.vrs
+
+#     if chain_id:
+#         v = canonical_v + chain_id * 2 + EIP155_CHAIN_ID_OFFSET
+#     else:
+#         v = canonical_v + V_OFFSET
+
+#     return VRS((v, r, s))
+
+def create_transaction_signature(
+        unsigned_txn: UnsignedTransactionAPI,
+        private_key: List[bytes],
+        chain_id: int = None,
+) -> List[bytes]:
+    transaction_parts = rlp.decode(rlp.encode(unsigned_txn))
+    
     if chain_id:
         transaction_parts_for_signature = transaction_parts + [
             int_to_big_endian(chain_id),
@@ -73,19 +104,13 @@ def create_transaction_signature(
         ]
     else:
         transaction_parts_for_signature = transaction_parts
-
+    
     message = rlp.encode(transaction_parts_for_signature)
-    signature = private_key.sign_msg(message)
+    wots = winternitz.signatures.WOTS(privkey=private_key)
+    sig = wots.sign(message)
+    signature = sig['signature']
 
-    canonical_v, r, s = signature.vrs
-
-    if chain_id:
-        v = canonical_v + chain_id * 2 + EIP155_CHAIN_ID_OFFSET
-    else:
-        v = canonical_v + V_OFFSET
-
-    return VRS((v, r, s))
-
+    return signature
 
 def validate_transaction_signature(transaction: SignedTransactionAPI) -> None:
     message = transaction.get_message_for_signing()
