@@ -492,6 +492,33 @@ class WOTS(AbstractOTS):
             "hashalgo": self.__hashfunction.__qualname__,
             "digestsize": self.__digestsize
         }
+    
+    def sign_hash(self, msghash: bytes) -> dict:
+        privkey = self.privkey
+
+        if privkey is None:
+            raise ValueError("Unable to sign the message, only a public key "
+                             + "was specified")
+
+        # msghash = self.__hashfunction(message)
+        msg_to_sign = self._getSignatureBaseMessage(msghash)
+        signature = [self._chain(privkey[idx], 0, val)
+                     for idx, val in enumerate(msg_to_sign)]
+
+        # If the pubkey is not set yet, derive it from the signature
+        if (self.__pubkey is None):
+            self.__pubkey = [self._chain(signature[idx], val,
+                             self.__w - 1)
+                             for idx, val in enumerate(msg_to_sign)]
+
+        return {
+            "algorithm": "WOTS",
+            "signature": signature,
+            "pubkey": self.__pubkey.copy(),
+            "w": self.__w,
+            "hashalgo": self.__hashfunction.__qualname__,
+            "digestsize": self.__digestsize
+        }
 
     def getPubkeyFromSignature(self, message: bytes,
                                signature: List[bytes]) -> List[bytes]:
