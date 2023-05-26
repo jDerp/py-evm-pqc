@@ -2,8 +2,11 @@ from typing import (
     Iterable,
 )
 
+import winternitz.signatures
+
 from eth_keys import (
     keys,
+    datatypes,
 )
 from eth_keys.datatypes import (
     PrivateKey,
@@ -42,6 +45,7 @@ from .datatypes import (
     Snapshot,
 )
 
+from typing import List
 
 @to_tuple
 def get_signers_at_checkpoint(header: BlockHeaderAPI) -> Iterable[Address]:
@@ -87,16 +91,15 @@ def get_block_signer(header: BlockHeaderAPI) -> Address:
     """
     Return the address of the signer of the ``header``.
     """
+    wots = winternitz.signatures.WOTS()
 
     signature_hash = get_signature_hash(header)
 
     signature_bytes = header.extra_data[-SIGNATURE_LENGTH:]
 
-    signature = keys.Signature(signature_bytes=signature_bytes)
-
-    return signature.recover_public_key_from_msg_hash(
-        signature_hash
-    ).to_canonical_address()
+    signature = wots.sign(signature_bytes)["signature"]
+    public_key_listbytes = wots.getPubkeyFromSignatureHash(signature_hash, signature)
+    return datatypes.PublicKey(public_key_bytes=b''.join(public_key_listbytes)).to_canonical_address()
 
 
 def is_in_turn(signer: Address, snapshot: Snapshot, header: BlockHeaderAPI) -> bool:
@@ -114,10 +117,12 @@ def is_in_turn(signer: Address, snapshot: Snapshot, header: BlockHeaderAPI) -> b
 
 
 def sign_block_header(
-    header: BlockHeaderAPI, private_key: PrivateKey
+    header: BlockHeaderAPI, private_key: List[bytes]
 ) -> BlockHeaderAPI:
     signature_hash = get_signature_hash(header)
-    signature = private_key.sign_msg_hash(signature_hash)
+    wots = winternitz.signatures.WOTS(privkey=private_key)
+    signature = wots.sign_hash(signature_hash)["signature"]
+
     signers = get_signers_at_checkpoint(header)
 
     signed_extra_data = b"".join(
