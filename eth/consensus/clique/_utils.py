@@ -2,8 +2,8 @@ from typing import (
     Iterable,
 )
 
-from eth import (
-    winternitz,
+from eth.winternitz.signatures import (
+    WOTS,
 )
 
 from eth_keys import (
@@ -93,7 +93,7 @@ def get_block_signer(header: BlockHeaderAPI) -> Address:
     """
     Return the address of the signer of the ``header``.
     """
-    wots = winternitz.signatures.WOTS()
+    wots = WOTS()
 
     signature_hash = get_signature_hash(header)
 
@@ -122,7 +122,7 @@ def sign_block_header(
     header: BlockHeaderAPI, private_key: List[bytes]
 ) -> BlockHeaderAPI:
     signature_hash = get_signature_hash(header)
-    wots = winternitz.signatures.WOTS(privkey=private_key)
+    wots = WOTS(privkey=private_key)
     signature = wots.sign_hash(signature_hash)["signature"]
 
     signers = get_signers_at_checkpoint(header)

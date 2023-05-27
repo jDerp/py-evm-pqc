@@ -2,8 +2,8 @@ from typing import (
     NamedTuple,
 )
 
-from eth import (
-    winternitz,
+from eth.winternitz.signatures import (
+    WOTS,
 )
 
 from eth_keys import (
@@ -108,7 +108,7 @@ def create_transaction_signature(
         transaction_parts_for_signature = transaction_parts
     
     message = rlp.encode(transaction_parts_for_signature)
-    wots = winternitz.signatures.WOTS(privkey=private_key)
+    wots = WOTS(privkey=private_key)
     sig = wots.sign(message)
     signature = sig['signature']
 
@@ -118,7 +118,7 @@ def validate_transaction_signature(transaction: SignedTransactionAPI) -> None:
     message = transaction.get_message_for_signing()
     # vrs = (transaction.y_parity, transaction.r, transaction.s)
     signature = transaction.signature
-    wots = winternitz.signatures.WOTS()
+    wots = WOTS()
     try:
         # signature = keys.Signature(vrs=vrs)
         # public_key = signature.recover_public_key_from_msg(message)
@@ -137,7 +137,7 @@ def extract_transaction_sender(transaction: SignedTransactionAPI) -> Address:
     signature = transaction.signature
     message = transaction.get_message_for_signing()
     # public_key = signature.recover_public_key_from_msg(message)
-    public_key_listbytes = winternitz.signatures.WOTS().getPubkeyFromSignature(message, signature)
+    public_key_listbytes = WOTS().getPubkeyFromSignature(message, signature)
     public_key = datatypes.PublicKey(public_key_bytes=b''.join(public_key_listbytes))
     sender = public_key.to_canonical_address()
     return Address(sender)
