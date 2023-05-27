@@ -2,7 +2,9 @@ from typing import (
     Iterable,
 )
 
-import winternitz.signatures
+from eth import (
+    winternitz,
+)
 
 from eth_keys import (
     keys,

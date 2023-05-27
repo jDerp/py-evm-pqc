@@ -2,7 +2,9 @@ from typing import (
     NamedTuple,
 )
 
-import winternitz.signatures
+from eth import (
+    winternitz,
+)
 
 from eth_keys import (
     datatypes,
